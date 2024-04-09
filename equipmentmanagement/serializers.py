@@ -52,3 +52,10 @@ class EquipmentSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Equipment
         fields = ['id', 'name', 'nsn', 'lin', 'unit', 'serial_number', 'status', 'location']
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    unit_id = serializers.IntegerField()
+    # Alternatively, if you want to use UIC as a reference:
+    # unit_uic = serializers.SlugRelatedField(slug_field='uic', queryset=Unit.objects.all(), source='unit', allow_null=True)                

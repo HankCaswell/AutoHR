@@ -1,16 +1,14 @@
 from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST)
 from django.contrib.auth.models import User
 from .models import Unit 
-from .serializers import UserRegistrationSerializer, UserProfileSerializer
+from .serializers import UserRegistrationSerializer, UserProfileSerializer, FileUploadSerializer
 from .serializers import UnitSerializer
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
+from autoHR.utils.pdf_parser import extract_text_from_pdf
 # Create your views here.
 
 
@@ -48,3 +46,16 @@ class CreateUnitView(APIView):
 class UnitListView(ListAPIView):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+
+class PDFTextView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = FileUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            file = serializer.validated_data['file']
+            extracted_text = extract_text_from_pdf(file)
+            return Response({"extracted text": extracted_text}, status=HTTP_200_OK)
+        else: 
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        
+
+        
