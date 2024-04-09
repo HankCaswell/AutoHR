@@ -1,11 +1,16 @@
 from django.shortcuts import render
+
+# Create your views here.
+from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST)
 from django.contrib.auth.models import User
-from unit.models import Unit 
+from .models import Unit 
 from .serializers import UserRegistrationSerializer, UserProfileSerializer
-from unit.serializers import UnitSerializer
+from .serializers import UnitSerializer
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 
@@ -27,3 +32,19 @@ class UnitCreate (APIView):
             if unit: 
                 return Response(serializer.data, HTTP_201_CREATED)
         return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+    
+
+
+class CreateUnitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UnitSerializer(data= request.data)
+        if serializer.is_valid():
+            unit = serializer.save()
+            return Response({'unit_id': unit.id}, status =HTTP_201_CREATED)
+        return Response(serializer.errors, status = HTTP_400_BAD_REQUEST)
+
+class UnitListView(ListAPIView):
+    queryset = Unit.objects.all()
+    serializer_class = UnitSerializer

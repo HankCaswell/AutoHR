@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserProfile
-from unit.models import Unit
+from .models import Unit
+from .models import Equipment
+from .models import Transaction
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     unit = serializers.PrimaryKeyRelatedField(queryset=Unit.objects.all(), allow_null=True)
@@ -29,3 +32,23 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         UserProfile.objects.create(user=user, **profile_data)
         return user
+
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Unit
+        fields = ['id', 'name', 'uic']
+
+class EquipmentSerialiers(serializers.ModelSerializer):
+    user = UserRegistrationSerializer(read_only = True)
+    equipment = serializers.SlugRelatedField(queryset = Equipment.objects.all(), slug_field = 'name')
+    
+    
+    class Meta: 
+        model = Transaction
+        fields = ['user', 'equipment', 'checkout_date', 'return_date', 'status']
+
+
+class EquipmentSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Equipment
+        fields = ['id', 'name', 'nsn', 'lin', 'unit', 'serial_number', 'status', 'location']
