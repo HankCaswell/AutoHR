@@ -4,6 +4,7 @@ from .models import UserProfile
 from .models import Unit
 from .models import Equipment
 from .models import Transaction
+from rest_framework.generics import get_object_or_404
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -20,17 +21,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'profile')
+        fields = ('username', 'email', 'password', 'profile', 'unit_id')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
+        unit_id = validated_data.pop('unit_id', None)
+        unit = get_object_or_404(Unit, id=unit_id)
+
         user = User.objects.create_user(
             validated_data['username'],
             validated_data['email'],
             validated_data['password']
         )
-        UserProfile.objects.create(user=user, **profile_data)
+        UserProfile.objects.create(user=user, unit=unit, **profile_data)
         return user
 
 class UnitSerializer(serializers.ModelSerializer):
@@ -56,6 +60,6 @@ class EquipmentSerializer(serializers.ModelSerializer):
 
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
-    unit_id = serializers.IntegerField()
+    # unit_id = serializers.IntegerField()
     # Alternatively, if you want to use UIC as a reference:
     # unit_uic = serializers.SlugRelatedField(slug_field='uic', queryset=Unit.objects.all(), source='unit', allow_null=True)                

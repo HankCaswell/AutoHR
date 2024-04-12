@@ -19,12 +19,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken import views as auth_views
+from equipmentmanagement.views import PDFTextView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/token-auth/', auth_views.obtain_auth_token, name = 'obtain-token'),
+    path('api/pdf-text/', PDFTextView.as_view(), name='pdf-text'),
     # path('api/unit/', include('unit.urls')),
+    path('api/', include('equipmentmanagement.urls')),
     path('api/user/', include('equipmentmanagement.urls')),
 #     path('api/equipment/', include('equipment.urls')),
 #     path('api/transaction/', include('transaction.urls')),

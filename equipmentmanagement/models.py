@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db import models
-
+from django.conf import settings
+from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -26,7 +27,7 @@ class Equipment(models.Model):
     name = models.CharField(max_length=100)
     nsn = models.CharField(max_length = 20, blank = True, null = True)
     lin = models.CharField(max_length=50, blank = True, null = True)
-    serial_number = models.CharField(max_length=100, unique=True)
+    serial_number = models.CharField(max_length=100)
     location = models.CharField(max_length = 25)
     quantity = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices = STATUS_CHOICES, default='Available')  # e.g., Available, Signed out to X user 
@@ -43,3 +44,26 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.equipment.name} - {self.user.username}"
+    
+
+class Cart(models.Model): 
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
+    equipment = models.ManyToManyField(Equipment, through='CartItem')
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    Equipment= models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+class Transaction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    checkout_date = models.DateField(auto_now_add=True)
+    expected_return_date = models.DateField()
+    actual_return_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices = [('Signed Out', 'signed_out')])  # e.g., Out, Returned
+
+    def save(self, *args, **kwargs):
+        if self.status == 'returned' and not self.actual_return_date:
+            self.actual_return_date  = timezone.now()
+        super().save(*args, **kwargs)
