@@ -1,4 +1,4 @@
-import fitz # PyMuPDF
+import fitz 
 import re
 
 def extract_text_from_pdf(file_stream):
@@ -53,41 +53,6 @@ def parse_equipment_details(equipment_text):
             i += 1
 
     return results
-
-
-
-#THIS ONE WORKS BUT DOES NOT RETURN THE SERIAL NUMBERS CORRECTLY
-# def parse_equipment_details(equipment_text):
-#     results = []
-#     # Pattern to extract the desired information
-#     i = 0 
-#     lines = equipment_text.split('\n')
-#     while i< len(lines):
-#         line = lines[i].strip()
-#         if len(line) == 13 and line[len(line)-1].isdigit():
-#             nsn = line
-#             name = lines[i+1].strip()
-#             quantity = lines[i+3].strip()
-
-#             serial_numbers = []
-#             j = i+4
-#             while j < len(lines) and not (len(lines[j].strip()) == 13 and lines[j].strip()[0].isdigit()):
-#                 if lines[j].strip() == "SerNo/RegNo/LotNo":
-#                     serial_number = lines[j + 1].strip()
-#                     serial_numbers.append(serial_number)
-#                     j += 1  # Skip the next line as it's already processed as a serial number
-#                 j += 1
-#             results.append({
-#                 "nsn": nsn,
-#                 "name": name,
-#                 "quantity": quantity, 
-#                 "serial numbers": serial_numbers,
-#             })
-#             i = j
-#         else:
-#             i += 1
-#     return results
-
 
            
 def debug_parse_equipment_details(equipment_text):

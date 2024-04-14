@@ -51,19 +51,28 @@ class Cart(models.Model):
     equipment = models.ManyToManyField(Equipment, through='CartItem')
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     Equipment= models.ForeignKey(Equipment, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
 
 class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
-    checkout_date = models.DateField(auto_now_add=True)
+    equipment = models.ForeignKey('Equipment', on_delete=models.CASCADE)  # Assuming 'Equipment' is in the same app
+    checkout_date = models.DateTimeField(auto_now_add=True)  # Use DateTimeField if time is relevant
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices = [('Signed Out', 'signed_out')])  # e.g., Out, Returned
+    
+    # Correct status choices definition
+    STATUS_CHOICES = [
+        ('signed_out', 'Signed Out'),
+        ('returned', 'Returned')
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='signed_out')
 
     def save(self, *args, **kwargs):
         if self.status == 'returned' and not self.actual_return_date:
-            self.actual_return_date  = timezone.now()
+            self.actual_return_date = timezone.now()  # Call the method to get the actual datetime
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.equipment.name} - {self.status}"

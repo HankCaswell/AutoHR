@@ -193,3 +193,52 @@ class CartView(DetailView):
     def get_object(self):
         # Ensures that we return the cart for the currently logged-in user
         return Cart.objects.get(user=self.request.user)
+    
+
+
+class AddToCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        equipment_id = request.data.get('equipment_id')
+        quantity = int(request.data.get('quantity', 1))
+
+        equipment = get_object_or_404(Equipment, id=equipment_id)
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        CartItem.objects.create(cart=cart, equipment=equipment, quantity=quantity)
+
+        return Response({'status': 'added to cart'}, status=HTTP_201_CREATED)
+
+class CheckoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        cart = get_object_or_404(Cart, user=request.user)
+        transaction_items = []
+
+        with transaction.atomic():
+            for item in cart.cartitem_set.all():
+                Transaction.objects.create(
+                    user=request.user,
+                    equipment=item.equipment,
+                    expected_return_date=request.data.get('expected_return_date'),
+                    status='signed_out'
+                )
+                item.equipment.quantity -= item.quantity  # Assuming quantity management
+                item.equipment.save()
+                transaction_items.append(item.equipment.name)
+                item.delete()
+
+        return Response({'status': 'checkout completed', 'items': transaction_items}, status=HTTP_200_OK)
+
+class ReturnEquipmentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        transaction_id = request.data.get('transaction_id')
+        transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
+        
+        transaction.status = 'returned'
+        transaction.save()
+
+        return Response({'status': 'equipment returned'}, status=HTTP_200_OK)
